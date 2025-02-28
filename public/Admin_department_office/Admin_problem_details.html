@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem Details</title>
+    <link rel="stylesheet" href="../Admin_department_office/Admin_problem_details.css">
+</head>
+
+<body>
+    <h1>Problem Details</h1>
+    <div id="details-container">
+        <!-- Data will be dynamically inserted here -->
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>Name</td>
+                <td id="name"></td>
+            </tr>
+            <tr>
+                <td>Email</td>
+                <td id="email"></td>
+            </tr>
+            <tr>
+                <td>Phone Number</td>
+                <td id="phone"></td>
+            </tr>
+            <tr>
+                <td>Address</td>
+                <td id="address"></td>
+            </tr>
+            <tr>
+                <td>Coordinates</td>
+                <td id="coordinates"></td>
+            </tr>
+            <tr>
+                <td>Description</td>
+                <td id="Description"></td>
+            </tr>
+            <tr>
+                <td>AI Response</td>
+                <td id="AI" style="color: rgb(30, 37, 239);"></td>
+            </tr>
+            <tr>
+                <td>Image</td>
+                <td id="image"></td>
+            </tr>
+            <tr>
+                <td>Date</td>
+                <td id="date"></td>
+            </tr>
+            <tr>
+                <td>Upload Path</td>
+                <td id="uploadPath"></td>
+            </tr>
+            <tr id="button-row">
+                <td colspan="2">
+                    <button class="btn" onclick="sendChoice('accept')" id="sendEmailBtn"
+                        style="margin-left: 400px; background-color: rgb(58, 193, 58);">Accept</button>
+                    <button class="btn" onclick="showReasonInput('reject') " id="sendEmailBtn2"
+                        style="background-color: rgb(240, 43, 43);">Reject</button>
+                    <!-- <button class="btn" onclick="showReasonInput('hold')">Hold</button> -->
+                </td>
+            </tr>
+            <tr id="reason-input-row" style="display: none;">
+                <td colspan="2">
+                    <input type="text" id="reasonInput" class="reason-input" placeholder="Enter reason...">
+                    <button class="btn" onclick="sendChoiceWithReason()">Submit</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+
+    <script>
+
+        let name = document.querySelector("#name").innerText;
+
+        document.getElementById('sendEmailBtn').addEventListener('click', function () {
+            fetch('/sendemail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: `${document.querySelector("#name").innerText}`,
+                    email: `${document.querySelector("#email").innerText}`,
+                    message: `Dear ${document.querySelector("#name").innerText}, Your problem has been accepted by Nagar Nigam and the working on it will be starting soon.Thanks !! `,
+                    msg: `Accepted`
+                })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Email sent successfully');
+                    } else {
+                        console.error('Error sending email');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending email:', error);
+                });
+        });
+
+
+
+        // 
+        document.getElementById('sendEmailBtn2').addEventListener('click', function () {
+            fetch('/sendemail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: `${name}`,
+                    email: `${document.querySelector("#email")}`,
+                    message: `Dear ${name} , \n We regret to inform you that your problem is rejected by Nagar Nigam due to some reasons. \n\t Sorry !! \n Remark : ${reasonInput.innerText} `,
+                    msg: `Rejected`
+                })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Email sent successfully');
+                    } else {
+                        console.error('Error sending email');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending email:', error);
+                });
+        });
+
+
+
+    </script>
+
+
+    <script>
+
+const add=document.getElementById("address").innerHTML;
+        // Function to parse URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Function to fetch details of a specific card
+        function fetchDetailsById(id) {
+            // Fetch data for the specific card based on the provided ID
+            fetch(`/getDetailsById?id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Display details of the card
+                    document.getElementById('name').textContent = data.name;
+                    document.getElementById('email').textContent = data.email;
+                    document.getElementById('phone').textContent = data.PhoneNumber;
+                    document.getElementById('address').textContent = data.address;
+                    document.getElementById('Description').textContent = data.description;
+                    document.getElementById('coordinates').textContent = `${data.latitude}, ${data.longitude}`;
+                    document.getElementById('image').innerHTML = `<img src="${data.imagePath}" id="fetchedImage"  alt="Image">`;
+                    document.getElementById('date').textContent = new Date(data.date).toLocaleDateString();
+                    // document.getElementById('uploadPath').innerHTML = `<a href="#" onclick="downloadFile('${data.uploadPath}')">${data.uploadPath}</a>`;
+                    address=data.address;
+                    document.getElementById('uploadPath').innerHTML = `<img src="${data.uploadPath}" alt="Image">`
+                    // Check if accept, reject, or hold choices are present
+                    if (data.accept || data.reject || data.hold) {
+                        // Hide the buttons
+                        document.getElementById('button-row').style.display = 'none';
+                    } else {
+                        // Show the buttons
+                        document.getElementById('button-row').style.display = 'table-row';
+                    }
+                })
+                .catch(error => console.error('Error fetching details:', error));
+        }
+
+        // Get the ID from the URL parameter
+        const id = getUrlParameter('id');
+
+        // Call fetchDetailsById with the retrieved ID
+        fetchDetailsById(id);
+
+        // Function to send the choice to the backend
+        function sendChoice(choice) {
+            // If choice is reject or hold, show reason input
+            if (choice === 'reject' || choice === 'hold') {
+                document.getElementById('reason-input-row').style.display = 'table-row';
+            } else {
+                // Otherwise, directly send the choice without reason
+                fetch(`/AdminsubmitForm`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id, choice })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Handle response from the backend if needed
+                        if (choice === 'accept') {
+                            window.location.href = '../Admin_department_office/Admin_home_problems.html';
+                        }
+                        console.log(data);
+                    })
+                    .catch(error => console.error('Error sending choice:', error));
+            }
+
+        }
+
+        // Function to show reason input for reject or hold
+        function showReasonInput(choice) {
+            document.getElementById('reason-input-row').style.display = 'table-row';
+            document.getElementById('reasonInput').setAttribute('data-choice', choice);
+        }
+
+        // Function to send choice with reason to the backend
+        function sendChoiceWithReason() {
+            const choice = document.getElementById('reasonInput').getAttribute('data-choice');
+            const reason = document.getElementById('reasonInput').value;
+
+            fetch(`/AdminsubmitForm`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id, choice, reason })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle response from the backend if needed
+                    console.log(data);
+
+                    window.location.href = '../Admin_department_office/Admin_home_problems.html';
+
+                })
+                .catch(error => console.error('Error sending choice with reason:', error));
+        }
+
+        // Function to download file
+        function downloadFile(filePath) {
+            // Create a temporary anchor element
+            var link = document.createElement('a');
+            link.href = filePath;
+            link.download = filePath.split('/').pop(); // Extract filename from path
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+
+
+
+    </script>
+    <script type="module">
+        import { GoogleGenerativeAI } from "https://cdn.skypack.dev/@google/generative-ai";
+        async function fetchData(imageURL) {
+    const url = 'https://chatgpt-vision1.p.rapidapi.com/matagvision2';
+    
+    const options = {
+        method: 'POST',
+        headers: {
+            'x-rapidapi-key': '08f05536a6msh090dfe1fb045ee3p14aafbjsn0dda1460162c',
+            'x-rapidapi-host': 'chatgpt-vision1.p.rapidapi.com',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            messages: [
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: "what's in the image"
+                        },
+                        {
+                            type: 'image',
+                            url: imageURL
+                        }
+                    ]
+                }
+            ],
+            web_access: false
+        })
+    };
+
+    try {
+        const response = await fetch(url, options);
+        const result = await response.json(); // Parse the response as JSON
+        console.log('Full API response:', result);
+        
+        if (result.status === true && result.result) {
+            const description = result.result;
+            console.log('Extracted description:', description);
+            await GeminiResponse(description);
+        } else {
+            console.error('Unexpected API response structure:', result);
+            throw new Error('Invalid API response structure');
+        }
+    } catch (error) {
+        console.error('Error in fetchData:', error);
+    }
+}
+
+async function GeminiResponse(des) {
+            const data = document.getElementById("Description").textContent;
+            const API_KEY = "AIzaSyA6u68CTpcFE3lqf7CfJZm6_jEm4f93-Rg"; 
+            const genAI = new GoogleGenerativeAI(API_KEY);
+            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+                const op=des;
+                
+          
+            const prompt = `
+You are an advanced AI assistant specialized in cost estimation and project planning for various problems and tasks in India. Your role is to analyze the following operation type and data to provide detailed cost estimates and time projections for solving these issues. Your estimates should be based on current Indian market prices and labor costs.
+
+Operation Type: ${op}
+Input Data: ${data} 
+
+
+Based on the operation type and input data provided above, please analyze the problem and provide the following information:
+
+1. Total Cost Summary:
+   - Provide a clear, prominent total cost estimate in Indian Rupees (₹)
+   - Include a brief one-sentence summary of what this cost covers
+
+2. Material Costs:
+   - List all required materials
+   - Provide current market prices for each material in Indian Rupees (₹)
+   - Calculate the subtotal for material costs
+
+3. Labor Requirements and Costs:
+   - Estimate the number of people required for the task
+   - Specify the types of skilled or unskilled labor needed
+   - Provide the current average hourly or daily wage for each type of worker in India
+   - Calculate the subtotal for labor costs
+
+4. Time Estimation:
+   - Estimate the total time required to complete the task
+   - Break down the time for different phases of the project, if applicable
+
+5. Additional Costs:
+   - Include any overhead, equipment rental, or miscellaneous costs
+   - Provide a subtotal for these additional costs
+
+6. Cost Breakdown:
+   - Clearly show how the total cost is calculated from the subtotals of materials, labor, and additional costs
+
+7. Accuracy and Variability:
+   - Indicate the confidence level of your estimate (e.g., ±10%)
+   - Mention any factors that could significantly affect the cost or time
+
+8. Alternative Solutions:
+   - If applicable, suggest alternative approaches that might be more cost-effective or time-efficient
+   - Provide a brief cost comparison for these alternatives
+
+Please ensure that your estimates are as accurate as possible, taking into account regional price variations within India, seasonal factors, and current market trends. If the operation type or input data lacks critical information, please indicate what additional information would be needed for a more accurate estimate.
+
+Your response should be clear, well-structured, and easy to understand for someone without technical expertise. Use bullet points and subheadings to organize the information effectively. Always start your response with the total cost estimate prominently displayed.
+
+If the operation type requires specific considerations or approaches, please adjust your analysis accordingly. For image-based inputs, describe the relevant details you're basing your estimates on.
+
+`;
+
+            try {
+                const GeminiResult = await model.generateContent(prompt);
+                const response = await GeminiResult.response;
+                const text = await response.text();
+                // const cleanedText = text.replace(/[^\w\s,.!?]/g, '');
+                const cleanedText = text.replace(/\*/g, '');
+
+                // console.log(cleanedText);
+                document.getElementById("AI").textContent = `address:${address}+${cleanedText}`;
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        setTimeout(() => {
+            const imgElement = document.getElementById('fetchedImage');
+            const imageurl = imgElement.src;
+
+            fetchData(imageurl);
+        }, 1000)
+
+
+    </script>
+</body>
+
+</html>
